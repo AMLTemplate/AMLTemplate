@@ -1,0 +1,45 @@
+parameters:
+  configuration: Release
+  fakeDeployment: true
+  targets: 'Build'
+steps:
+- checkout: self
+  clean: true
+  persistCredentials: true
+  submodules: true
+- task: PowerShell@2
+  displayName: 'Determine which apps were updated'
+  env:
+    Build_SourceBranchName: $(Build.SourceBranchName)
+  inputs:
+    script: |-
+      $editedFiles = git diff HEAD HEAD~ --name-only
+      $editedFiles | ForEach-Object {
+        Switch -Wildcard ($_) {
+          'src/MyProject/AML_Pipeline/*' { Write-Output "##vso[task.setvariable variable=AML_UPDATED;isOutput=true]True" }
+
+          'src/MyProject/Xflow/*' { Write-Output "##vso[task.setvariable variable=XFLOW_UPDATED;isOutput=true]True" }
+
+          'src/MyProject/Databricks/*' { Write-Output "##vso[task.setvariable variable=DBK_UPDATED;isOutput=true]True" }
+
+        }
+      }
+      if ($env:Build_SourceBranchName -eq 'master') {
+        Write-Host "##vso[task.setvariable variable=XFLOW_FAKEDEPLOY;isOutput=true]False"
+        Write-Host "##vso[task.setvariable variable=IS_MASTER_BRANCH;isOutput=true]True"
+      } else {
+        Write-Host "##vso[task.setvariable variable=XFLOW_FAKEDEPLOY;isOutput=true]True"
+        Write-Host "##vso[task.setvariable variable=IS_MASTER_BRANCH;isOutput=true]False"
+      }
+    targetType: inline
+  name: setvarStep
+- script: echo $(setvarStep.AML_UPDATED)
+  name: is_AML_code_changed
+- script: echo $(setvarStep.XFLOW_UPDATED)
+  name: is_XFLOW_code_changed
+- script: echo $(setvarStep.DBK_UPDATED)
+  name: is_Databricks_code_changed
+- script: echo $(setvarStep.XFLOW_FAKEDEPLOY)
+  name: XFLOW_FAKEDEPLOY
+- script: echo $(setvarStep.IS_MASTER_BRANCH)
+  name: IS_MASTER_BRANCH

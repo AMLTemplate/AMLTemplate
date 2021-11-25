@@ -1,0 +1,132 @@
+﻿// Recurrent Scope Variables:
+//@@__vc@@
+//  __vc: https://cosmos15.osdinfra.net/cosmos/Asimov.Partner.datafun/
+//  _version: @@_version@@
+//  _recurrence: @@_recurrence@@
+//  _trackerFolder: @@_trackerFolder@@
+//  _startDate: @@_startDate@@
+//  _endDate: @@_endDate@@
+//  _priority: @@_priority@@
+//  _maxJobs: @@_maxJobs@@
+//  _customProperties: @@_customProperties@@
+//  _vcPercentAllocation: @@_vcPercentAllocation@@
+//  _AllData: @@AllData@@
+// _dependencyStreams: @@_dependencyStreams@@
+// _dependencyCheckMinutes: @@_dependencyCheckMinutes@@
+
+// runMode: @@runMode@@                             => "prod" or "ppe" or "test". For local testing, this does not matter.
+
+#DECLARE runMode string =
+    IF("@@runMode@@".Equals("prod", StringComparison.InvariantCultureIgnoreCase), "Prod",
+    IF("@@runMode@@".Equals("ppe",  StringComparison.InvariantCultureIgnoreCase), "PPE", "PPE"));
+
+#DECLARE version string = IF("@@version@@".StartsWith("@@"), "V1", "@@version@@");
+#DECLARE UtcNow DateTime = DateTime.UtcNow;
+#DECLARE startDateTimeX DateTime = IF("@@startDate@@".StartsWith("@@"), @UtcNow, DateTime.Parse("@@startDate@@"));
+#DECLARE currentDateTime DateTime = (@startDateTimeX).Date.AddHours(-1);
+// Output stream for day D-1.
+#DECLARE outputDateTime DateTime = (@startDateTimeX).Date.AddDays(-1);
+#DECLARE streamsRoot string = string.Format("/shares/asimov.prod.data/UserSensitive.Usage.Partner/Processed/DSProjectSample/{0}/{1}/", @version, @runMode);
+
+REFERENCE "/shares/asimov.prod.data/Public/Resources/Latest/Device/Microsoft.Telemetry.Common.Utilities.dll";
+REFERENCE "/shares/asimov.prod.data/Public/Resources/Latest/Device/Microsoft.Telemetry.Common.Parsers.dll";
+REFERENCE @"/shares/asimov.prod.data/Public/Resources/Latest/ScopeLib/Relevance.ScopeLib.dll";
+
+MODULE "/shares/asimov.prod.data/Public/Resources/Latest/Asimov/Api/v3/Asimov.Batch.module" AS Asimov;
+MODULE "/shares/PXSCosmos15.Prod/PXS.DeleteSignal.PROD/PrivacyAnnotation/PrivacyAnnotation.module"; 
+USING Privacy; 
+USING Microsoft.Telemetry.Common.Utilities; 
+USING Microsoft.Telemetry.Common.Parsers; 
+USING Microsoft.SegmentRelevance.ScopeLib;
+
+//---------Get AppInteractivity ----------------------
+[PIN] REFERENCE @"shares/asimov.prod.data/Public/Resources/Latest/Usage/AppUsage/Microsoft.Telemetry.AppUsage.dll";
+[PIN] REFERENCE @"shares/asimov.prod.data/Public/Resources/Latest/Usage/AppUsage/Microsoft.OSG.OneStore.DnA.Cosmos.DynamicViewResolver.dll";
+[PIN] RESOURCE @"shares/asimov.prod.data/Public/Resources/Latest/Usage/DynamicView/AppUsage/AppUsageViews.xml";
+
+#DECLARE AppInteractivityView string = "/shares/asimov.prod.data/Public/Processed/Usage/AppUsage/Facts/AppInteractivity/AppInteractivity.view";
+
+#IF("@@AllData@@".StartsWith("@@"))  
+
+    AppInteractivity =
+        SELECT DeviceId, ClientIPAddress AS ClientIpAddress, EventTime AS ClientTime
+        FROM
+        (
+            VIEW @AppInteractivityView
+            PARAMS 
+            ( 
+                version = 6, //Required
+                startDate = @outputDateTime, 
+                endDate = @outputDateTime
+            )
+        );     
+#ELSE 
+    
+    #DECLARE EarliestStartDate DateTime = @outputDateTime.AddDays(-30);
+    AppInteractivity =
+        SELECT DeviceId, ClientIPAddress AS ClientIpAddress, EventTime AS ClientTime
+        FROM
+        (
+            VIEW @AppInteractivityView
+            PARAMS 
+            ( 
+                startDate = @EarliestStartDate, 
+                endDate = @outputDateTime
+            )
+        );
+#ENDIF
+
+#DECLARE appInteractivityPath string = @streamsRoot + string.Format("/AppInteractivity/{0:yyyy/MM/dd}/AppInteractivity_{0:yyyy-MM-dd}.ss", @outputDateTime);
+
+[Privacy.DataType.DeviceConnectivityAndConfiguration]
+[Privacy.Subject.Device.CommonSchema(Column="DeviceId")]
+OUTPUT AppInteractivity
+TO SSTREAM @appInteractivityPath
+CLUSTERED BY DeviceId
+SORTED BY DeviceId
+WITH STREAMEXPIRY "7";
+
+// For the training set, get six months starting with the month BEFORE the EndDate
+#DECLARE EndDate string = IF("@@endDate@@".StartsWith("@@"), "2020-03-01", "@@endDate@@");
+#DECLARE EndDateDT DateTime = DateTime.ParseExact(@EndDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+#SET EndDateDT = @EndDateDT.AddDays(- @EndDateDT.Day); // Last day of the last month
+#SET EndDate = @EndDateDT.ToString("yyyy-MM-dd");
+#DECLARE LookBackInMonths int = IF("@@lookBackInMonths@@".StartsWith("@@"), 6, Convert.ToInt16("@@lookBackInMonths@@")); 
+#DECLARE StartDateDT DateTime = @EndDateDT.AddMonths(-@LookBackInMonths +2); // +2 to compensate with the last 6 month calculation
+#SET StartDateDT = @StartDateDT.AddDays(- @StartDateDT.Day);
+#DECLARE StartDate string = @StartDateDT.ToString("yyyy-MM-dd");
+
+#DECLARE m365OutputPath string = @streamsRoot + string.Format("/M365Reporting/M365Reporting_{0:yyyy_MM}-{1:yyyy_MM}.ss", @StartDateDT, @EndDateDT);
+
+m365 =
+    SSTREAM SPARSE STREAMSET @"/shares/asimov.prod.data/UserSensitive.Usage.Partner/Processed/M365/BusinessReporting/Monthly/"
+                   PATTERN "%Y/%m/M365Reporting_WVD_%Y_%m_%d.ss"
+                   RANGE __date = [@StartDate, @EndDate]
+                   USING ColumnProcessor("-produce", @"DeviceId, TPId, SegmentGroup, SegmentName, SubSegmentName, Industry, A14Region, IsMAD, HasValidSubscription, UsedOffice, IsVirtualDevice, IsDomainJoined, IsCloudDomainJoined, IsSCCM", "-skipValidation")
+    ;
+
+m365 =
+    SELECT
+        __date.ToString("yyyy-MM") AS Date,
+        DeviceId,
+        TPId,
+        IsMAD, // TODO: What does this mean for a TPId?
+        HasValidSubscription, // TODO: Azure Subscription?
+        UsedOffice,
+        IsVirtualDevice,
+        IsDomainJoined,
+        IsCloudDomainJoined,
+        IsSCCM
+    FROM m365
+    WHERE TPId != NULL;
+//
+//
+[Privacy.DataType.DeviceConnectivityAndConfiguration]
+[Privacy.Subject.Device.CommonSchema(Column="DeviceId")]
+OUTPUT m365 TO
+SSTREAM @m365OutputPath
+HASH CLUSTERED BY DeviceId
+SORTED BY DeviceId
+   WITH STREAMEXPIRY "7";
+
+

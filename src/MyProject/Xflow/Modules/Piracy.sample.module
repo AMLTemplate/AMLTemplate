@@ -1,0 +1,75 @@
+﻿DEFINE MODULE Piracy
+BEGIN
+    REFERENCE @"/shares/asimov.prod.data/PublicPartner/OneCommercial/Resource/V1/Microsoft.OneCommercial.Telemetry.dll";
+    FUNC Score
+    RETURN
+        ROWSET
+        (
+            DeviceId : string,
+            UniqueInstanceDeviceId : string,
+            PiracyScore : double?,
+            PiracyScorePercentile : int?,
+            IsPirated : bool?
+        )
+    PARAMS
+    (
+        DeviceIdMapping ROWSET
+        (
+            DeviceId : string,
+            UniqueInstanceDeviceId : string
+        ),
+        PiracyScores ROWSET
+        (
+            DeviceId : string,
+            PiracyScore : double?,
+            PiracyScorePercentile : int?,
+            IsPirated : bool?
+        )
+    );
+END MODULE
+
+FUNC Score
+    RETURN
+    ROWSET
+    (
+        DeviceId : string,
+        UniqueInstanceDeviceId : string,
+        PiracyScore : double?,
+        PiracyScorePercentile : int?,
+        IsPirated : bool?
+    )
+    PARAMS
+    (
+        DeviceIdMapping ROWSET
+        (
+            DeviceId : string,
+            UniqueInstanceDeviceId : string
+        ),
+        PiracyScores ROWSET
+        (
+            DeviceId : string,
+            PiracyScore : double?,
+            PiracyScorePercentile : int?,
+            IsPirated : bool?
+        )
+    )      
+
+BEGIN
+    Predictions =
+        SELECT DeviceId,
+               PiracyScore,
+               PiracyScorePercentile,
+               IsPirated
+        FROM PiracyScores;
+    
+    PiracyFinal =
+        SELECT d.DeviceId,
+               d.UniqueInstanceDeviceId,
+               pred.PiracyScore,
+               pred.PiracyScorePercentile,
+               pred.IsPirated
+        FROM DeviceIdMapping AS d
+             LEFT OUTER JOIN
+                 Predictions AS pred
+             ON d.DeviceId == pred.DeviceId;
+END FUNC

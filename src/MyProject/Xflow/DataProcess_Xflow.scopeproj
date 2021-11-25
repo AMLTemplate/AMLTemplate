@@ -1,0 +1,73 @@
+﻿<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{beafac0f-729c-4b77-a712-e2c1feb6f03a}</ProjectGuid>
+    <OutputType>File</OutputType>
+    <AssemblyName>Algebra.xml</AssemblyName>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <Name>DSProject.Scope</Name>
+    <RootNamespace>CLTV.Scope</RootNamespace>
+    <VCSelectionInProjectProperty>&lt;Use Current VC in VC Selector&gt;</VCSelectionInProjectProperty>
+    <CosmosRuntimeVersion>Default</CosmosRuntimeVersion>
+    <ScopePath>%24(SCRIPT_DIR);%24(CLUSTER_ROOT);%24(SCOPE_DIR);%24(PROJECT_DIR)</ScopePath>
+    <InputStreamSearchPath>%24(PROJECT_DIR);%24(SCRIPT_DIR);%24(CLUSTER_ROOT)</InputStreamSearchPath>
+    <VertexDebugSolution>false</VertexDebugSolution>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>false</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Script Include="Scripts\V1\01DataExtractor.script">
+      <RemoveUselessParameters>False</RemoveUselessParameters>
+      <ScopeOldParameters>runMode=(\"Prod\"),startDate=(\"2020-03-01\")</ScopeOldParameters>
+      <ScopeClusterParameters>runMode=(\"Prod\"),startDate=(\"2020-03-01\")</ScopeClusterParameters>
+    </Script>
+    <Script Include="Scripts\V1\02Consolidated.script" />
+    <ScriptCode Include="Scripts\V1\01DataExtractor.script.cs">
+      <DependentUpon>Scripts\V1\01DataExtractor.script</DependentUpon>
+    </ScriptCode>
+    <ScriptCode Include="Scripts\V1\02Consolidated.script.cs">
+      <DependentUpon>Scripts\V1\02Consolidated.script</DependentUpon>
+    </ScriptCode>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Modules" />
+    <Folder Include="Views" />
+    <Folder Include="Scripts" />
+    <Folder Include="Scripts\V1\" />
+    <Folder Include="xflowDefinition" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Modules\Piracy.sample.module">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="ReadMe.txt">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Views\DeviceEnrichmentSample.view">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="xflowDefinition\Workflows.Prod.wfdef">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <DeployToAdls Include="Views\DeviceEnrichmentSample.view">
+      <DestinationDirectory>local/PublicPartner/Temp/DSProject/Resources</DestinationDirectory>
+    </DeployToAdls>
+    <DeployToAdls Include="Modules\Piracy.sample.module">
+      <DestinationDirectory>local/PublicPartner/Temp/DSProject/Resources</DestinationDirectory>
+    </DeployToAdls>
+  </ItemGroup>
+  <Import Condition="'$(SkipScopeCompilation)' != 'true'" Project="$(AppData)\Microsoft\ScopeStudio\MsBuild\1.0\Scope.targets" />
+  <Import Project="..\..\..\global.props" />
+  <Import Condition="Exists('$(CanaveralToolsDirectory)\Canaveral.targets') And '$(SkipCanaveralImport)' != 'true'" Project="$(CanaveralToolsDirectory)\Canaveral.targets" />
+</Project>

@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29403.142
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{202899A3-C531-4771-9089-0213D66978AE}") = "DataProcess_Xflow", "DataProcess_Xflow.scopeproj", "{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Debug|x64.ActiveCfg = Debug|x64
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Debug|x64.Build.0 = Debug|x64
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Debug|x86.ActiveCfg = Debug|x86
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Debug|x86.Build.0 = Debug|x86
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Release|x64.ActiveCfg = Release|x64
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Release|x64.Build.0 = Release|x64
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Release|x86.ActiveCfg = Release|x86
+		{BEAFAC0F-729C-4B77-A712-E2C1FEB6F03A}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F9D8CCDF-EC4D-414F-B1B6-376D3E2D8808}
+	EndGlobalSection
+EndGlobal

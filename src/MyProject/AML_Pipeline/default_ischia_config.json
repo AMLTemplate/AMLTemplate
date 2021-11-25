@@ -1,0 +1,43 @@
+{
+    "auth": {
+        "client_id": "8800ccd2-c5ae-49df-b209-de1d47f507a8",
+        "env_secret_name": "MyOptionalEnvVarFor8800ClientSecret",
+        "keyvault_url": "https://cosinedatateamkeyvault.vault.azure.net/",
+        "keyvault_secret_name": "adls-asimov-prod-data-c15-serviceprincipalkey"
+    },
+    "subscription_id": "2aef373f-4686-40a4-b75d-8221b6e666ab",
+    "resource_group": "CosineDataTeamRG",
+    "location": "westus",
+    "az_tenant_id": "72f988bf-86f1-41af-91ab-2d7cd011db47",
+    "aml_service_principal_client_id": "8800ccd2-c5ae-49df-b209-de1d47f507a8",
+    "aml_service_principal_client_secret_key": "adls-asimov-prod-data-c15-serviceprincipalkey",
+    "datastores": [
+        {
+            "name": "diicosmosdefaultsa_diispark1",
+            "type": "abs",
+            "is_default": "true",
+            "account_name": "diicosmosdefaultsa",
+            "container_name": "diispark-1",
+            "key_name": "abs-diicosmosdefaultsa-key"
+        },
+        {
+            "name": "adls_cosmos15",
+            "type": "adls",
+            "is_default": "false",
+            "account_name": "asimov-prod-data-c15",
+            "client_id": "8800ccd2-c5ae-49df-b209-de1d47f507a8",
+            "key_name": "adls-asimov-prod-data-c15-serviceprincipalkey"
+        }
+    ],
+    "aml_blob_retention": {
+        "enabled": true,
+        "datastore": "workspaceblobstore",
+        "subscription_id": "2aef373f-4686-40a4-b75d-8221b6e666ab",
+        "resource_group": "CosineDataTeamRG",
+        "retention_rule_name": "cdmlretention",
+        "retention_days": 15,
+        "container_prefixes": [
+            "{defaultcontainer}/azureml"
+        ]
+    }
+}

@@ -1,0 +1,9 @@
+# local package
+-e .
+
+# external requirements
+requests>=2.22 #.0
+databricks-cli>=0.8.7
+azureml-sdk
+keyring
+artifacts-keyring

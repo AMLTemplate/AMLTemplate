@@ -1,0 +1,88 @@
+pr:
+- master
+- develop
+pool:
+  name: CDML
+  demands: ImageOverride -equals MMS2016
+variables:
+- group: 'Datafun VC build account group'
+- group: 'CdeTeamKeyVault'
+resources:
+  repositories:
+    - repository: canaveral_templates
+      type: git
+      name: "Data Science/engineering.canaveral.build"
+stages:
+- stage: Build
+  displayName: Build
+  jobs:
+  - job: BuildCommon
+    steps:
+    - template: templates/build_common.yml
+  - job: XFLOW
+    dependsOn: BuildCommon
+    variables:
+      XFLOW_UPDATED_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.XFLOW_UPDATED'] ]
+    steps:
+    - checkout: self
+    - checkout: canaveral_templates
+    - template: templates/canaveralBuild.yml@canaveral_templates  
+      parameters:
+        fakeDeployment: True
+        clientId: $(DeploymentClientId)
+        clientSecret: $(DeploymentClientSecret)
+    condition: and(succeeded(), eq(dependencies.BuildCommon.outputs['setvarStep.XFLOW_UPDATED'], 'True'))
+  - job: Databricks
+    dependsOn: BuildCommon
+    variables:
+      DBK_UPDATED_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.DBK_UPDATED'] ]
+    steps:
+    - template: templates/databricksDeployment.yml
+  - job: AML
+    dependsOn: BuildCommon
+    variables:
+      AML_ACTION_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.AML_ACTION'] ]
+      AML_UPDATED_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.AML_UPDATED'] ]
+    steps:
+    - template: templates/amlBuild.yml
+      parameters:
+        aml_action: validate
+    condition: and(succeeded(), eq(dependencies.BuildCommon.outputs['setvarStep.AML_UPDATED'], 'True'))
+- stage: Release
+  displayName: Release
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - job: BuildCommon
+    steps:
+    - template: templates/build_common.yml
+  - job: XFLOW
+    dependsOn: BuildCommon
+    variables:
+      XFLOW_UPDATED_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.XFLOW_UPDATED'] ]
+      XFLOW_FAKEDEPLOY_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.XFLOW_FAKEDEPLOY'] ]
+    steps:
+    - checkout: self
+    - checkout: canaveral_templates
+    - template: templates/canaveralBuild.yml@canaveral_templates  
+      parameters:
+        fakeDeployment: $(XFLOW_FAKEDEPLOY_VAR) 
+        clientId: $(DeploymentClientId)
+        clientSecret: $(DeploymentClientSecret)
+    condition: and(succeeded(), eq(dependencies.BuildCommon.outputs['setvarStep.XFLOW_UPDATED'], 'True'))
+  - job: Databricks
+    dependsOn: BuildCommon
+    variables:
+      DBK_UPDATED_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.DBK_UPDATED'] ]
+    steps:
+    - template: templates/databricksDeployment.yml
+    condition: and(succeeded(), eq(dependencies.BuildCommon.outputs['setvarStep.DBK_UPDATED'], 'True'))
+  - job: AML
+    dependsOn: BuildCommon
+    variables:
+      AML_ACTION_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.AML_ACTION'] ]
+      AML_UPDATED_VAR: $[ dependencies.BuildCommon.outputs['setvarStep.AML_UPDATED'] ]
+    steps:
+    - template: templates/amlBuild.yml
+      parameters:
+        aml_action: publish-pipeline
+    condition: and(succeeded(), eq(dependencies.BuildCommon.outputs['setvarStep.AML_UPDATED'], 'True'))

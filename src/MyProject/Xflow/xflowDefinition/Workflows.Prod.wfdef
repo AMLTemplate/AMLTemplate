@@ -1,0 +1,39 @@
+<Workflows>
+  <!-- Workflow  - MyDSProject -->
+  <Workflow Name="MyDSProject.V1.Prod"
+          Enabled="1" 
+          Start="2020-03-01T00:00:00" 
+          SkipRecurrenceWhenStillExecuting="1" 
+          RecurrenceUnit="5" 
+          RecurrenceAmount="1" 
+          ReadOnly="0" 
+          Email="andcheng@microsoft.com" 
+          FolderName="MyDSProject"
+          Author="andcheng">
+	 <ConfigBases>
+     <ConfigBase Name="01DataExtractor" File="..\Scripts\V1\01DataExtractor.script" />
+     <ConfigBase Name="02Consolidated" File="..\Scripts\V1\02Consolidated.script" />
+    </ConfigBases>
+    <Parameters>
+      <Parameter Name="__vc" Value="https://cosmos15.osdinfra.net/cosmos/asimov.partner.datafun"/>
+      <Parameter Name="_maxJobs" Value="1"/>
+	  <Parameter Name="_maxJobsTimeoutMinutes" Value="24000"/>
+	  <Parameter Name="_priority" Value="650"/>
+      <Parameter Name="_reprocessingPriority" Value="650"/>
+      <Parameter Name="_recurrence" Value="MonthlyTracker"/>
+	  <Parameter Name="_waitingPeriod" Value="1"/>
+      <Parameter Name="_startDate" Value="2020-03-01T00:00:00"/>
+	  <Parameter Name="_trackerFolder" Value="/shares/asimov.prod.data/PublicPartner/Staging/DataScienceProject_Sample/Prod/tracker/"/>
+      <Parameter Name="_customProperties" Value="JobOwner=datafun.prod"/>
+      <Parameter Name="runMode" Value="Prod"/>
+    </Parameters>
+    <Activities>
+      <Activity Name="01DataExtractor" ConfigBase="01DataExtractor" Class="Microsoft.Xflow.Activities.Scope.RecurrentScopeActivityV3" CredentialName="ScopeJob.Asimov.Variant.DeviceMetrics" Enabled="1" MaxRetries="3" />
+      <Activity Name="02Consolidated" ConfigBase="02Consolidated" Class="Microsoft.Xflow.Activities.Scope.RecurrentScopeActivityV3" CredentialName="ScopeJob.Asimov.Variant.DeviceMetrics" Enabled="1" MaxRetries="3" >
+        <Dependencies>
+          <Dependency Name="MyDSProject.V1.Prod.01DataExtractor" />
+        </Dependencies>
+      </Activity>
+    </Activities>
+  </Workflow>
+</Workflows>

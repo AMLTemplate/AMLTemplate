@@ -1,0 +1,16 @@
+name: iml_module_environment
+channels:
+- defaults
+dependencies:
+- python=3.7
+- pip:
+  - pandas>=0.23.4,<1.0.0
+  - pyarrow>=0.13.0
+  - joblib==0.14.0
+  - azureml-defaults
+  - azureml-core
+  - azureml-designer-core
+  - scikit-learn==0.22.2
+  - azureml-designer-classic-modules
+  - azureml-interpret
+  - azureml-contrib-interpret

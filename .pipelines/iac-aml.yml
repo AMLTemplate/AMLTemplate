@@ -1,0 +1,54 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: 'Datafun VC build account group'
+  - group: 'Ischia Secrets'
+
+jobs:
+- job: Create_AML_Workspace
+  pool:
+    name: 'Package ES Lab E'
+  steps:
+  - template: templates/amlBuild.yml
+- job: Register_Custom_Module
+  dependsOn: Create_AML_Workspace
+  steps:
+  - template: iac_aml_support_files/iac_common.yml
+    parameters:
+      requirementsPath: '.pipelines/iac_aml_support_files/requirements.txt'
+  - bash: |
+     # install azure-cli (https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
+     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+     # Install preview version of azure-cli-ml
+     az extension remove -n azure-cli-ml
+     az extension add --source https://azuremlsdktestpypi.azureedge.net/CLI-SDK-Runners-Validation/24737064/azure_cli_ml-0.1.0.24737064-py3-none-any.whl --pip-extra-index-urls https://azuremlsdktestpypi.azureedge.net/CLI-SDK-Runners-Validation/24737064 --yes
+     az extension list -o table
+     az ml module -h
+     # Install azureml-sdk with Pipeline, Module
+     python -m pip install azureml-pipeline-wrapper[steps,notebooks]==0.1.0.24737064 --index-url https://azuremlsdktestpypi.azureedge.net/CLI-SDK-Runners-Validation/24737064 --user --upgrade
+    failOnStderr: 'false'
+    displayName: 'Install azure-cli and preview version of azure-cli-ml, pipeline and module SDK'
+  - bash: |
+     # Invoke Python to register datatype    
+     python3 $(Build.SourcesDirectory)/.pipelines/iac_aml_support_files/aml_service/custommodule/register_datatype.py --AZUREML_RESOURCEGROUP $(Build.Repository.Name) --AZUREML_WORKSPACE_NAME $(Build.Repository.Name) --AZUREML_SUBSCRIPTION_ID $(AzureSub_ID) --TENANT_ID $(TENANT_ID) --APP_ID $(AzureSub_APP_ID) --APP_SECRET $(AzureSub_APP_Secret)
+    failOnStderr: 'false'
+    displayName: 'Register datatype to aml workspace.'
+  - bash: |
+     # Configure aml workspace
+     az login --service-principal --username $AzureSub_APP_ID_Val --password $AzureSub_APP_Secret_Val --tenant $TENANT_ID_Val   
+     az account set -s $Subscription_id  
+     az ml folder attach -w $Workspace_name -g $Resource_Group
+     # Register custom module to aml workspace
+     az ml module register --spec-file=$(Build.SourcesDirectory)/.pipelines/iac_aml_support_files/aml_module/InterpretML/iml_module_spec.yaml
+    env:
+      AzureSub_APP_ID_Val: $(AzureSub_APP_ID)
+      AzureSub_APP_Secret_Val: $(AzureSub_APP_Secret)
+      TENANT_ID_Val: $(TENANT_ID)
+      Workspace_name: $(Build.Repository.Name)
+      Resource_Group: $(Build.Repository.Name)
+      Subscription_id: $(AzureSub_ID)
+    failOnStderr: 'true'
+    displayName: Login to Azure CLI and register custom module

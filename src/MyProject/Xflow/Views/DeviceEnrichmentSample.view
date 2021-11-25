@@ -1,0 +1,13 @@
+﻿CREATE VIEW DeviceEnrichmentConsolidatedView USING Microsoft.OneCommercial.Telemetry.OneCommercialViewResolver(pipeline:"DeviceEnrichmentConsolidatedDaily", xmlFile:"DeviceEnrichmentSchema.xml", streamTemplate:"/%V/%R/DeviceEnrichment/Processed/%Y/%m/DeviceEnrichment_%Y_%m_%d.ss", commaSeparatedRangeTypes: "__date", isSparse:true);
+
+#IF(EXISTS(@"/shares/asimov.prod.data/PublicPartner.OneCommercial/Resource/V1/Microsoft.OneCommercial.Telemetry.Common.SchemaAdjuster.dll"))
+    REFERENCE @"/shares/asimov.prod.data/PublicPartner.OneCommercial/Resource/V1/Microsoft.OneCommercial.Telemetry.Common.SchemaAdjuster.dll";
+#ELSE
+    REFERENCE @"/shares/asimov.prod.data/PublicPartner/OneCommercial/Resource/V1/Microsoft.OneCommercial.Telemetry.Common.SchemaAdjuster.dll";
+#ENDIF
+
+#IF(EXISTS(@"/shares/asimov.prod.data/PublicPartner.OneCommercial/Resource/V1/DeviceEnrichmentSchema.xml"))
+    RESOURCE @"/shares/asimov.prod.data/PublicPartner.OneCommercial/Resource/V1/DeviceEnrichmentSchema.xml";
+#ELSE
+    RESOURCE @"/shares/asimov.prod.data/PublicPartner/OneCommercial/Resource/V1/DeviceEnrichmentSchema.xml";
+#ENDIF

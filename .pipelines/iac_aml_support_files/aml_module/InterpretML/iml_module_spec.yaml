@@ -1,0 +1,40 @@
+# working with azure-cli-ml version 0.1.0.13766063 https://azuremlsdktestpypi.azureedge.net/CLI-SDK-Runners-Validation/13766063/azure_cli_ml-0.1.0.13766063-py3-none-any.whl
+amlModuleIdentifier:
+  namespace: microsoft.com/cosinedata
+  moduleName: CDML Interpret ML
+  moduleVersion: 0.0.1
+category: Model Scoring & Evaluation
+isDeterministic: true
+releaseState: Release
+description: |
+    Apply Azure interpretability machine learning on trained model
+metadata:
+  annotations:
+    tags: [CosineData, CDML, IML]
+    contact: CDML Feature Crew <cdml@microsoft.com>
+    sourceCode: https://dev.azure.com/microsoft/Data%20Science/_git/CDEML
+    helpDocument: "https://aka.ms/CDML"
+inputs:
+    - { name: Trained model, type: [ModelDirectory] , optional: true}
+    - { name: Trained model name, type: [AnyDirectory], optional: true}
+    - { name: Dataset to train, type: [AnyDirectory] }
+    - { name: Dataset to test, type: [AnyDirectory] }
+    - { name: Feature names, type: String, optional: true }
+    - { name: Model source type, type: Enum, options: ['From ModelDirectory', 'Registered in Workspace'], default: "From ModelDirectory" }
+outputs:
+    - { name: Explanation Result, type: DataFrameDirectory }
+implementation:
+  container:
+    amlEnvironment:
+      python:
+        condaDependenciesFile: iml_conda.yaml
+    command: [python, iml_invoker.py]
+    args: [
+            [--trained-model, {inputPath: Trained model}],
+            [--trained-model-name, {inputPath: Trained model name}],
+            --dataset-to-train, {inputPath: Dataset to train},
+            --dataset-to-test, {inputPath: Dataset to test},
+            [--feature-names, {inputValue: Feature names}],
+            --model-source-type, {inputValue: Model source type},
+            --explanation-result, {outputPath: Explanation Result},
+        ]

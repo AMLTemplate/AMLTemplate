@@ -1,0 +1,33 @@
+parameters:
+  aml_action: validate
+steps:
+- task: PowerShell@2
+  displayName: 'Validate or Publish AzureML Pipeline'
+  env:
+    REPO: $(Build.Repository.Name)
+    SOURCE_BRANCH: $(Build.SourceBranch)
+    ServicePrincipalClientSecret: $(DataHarborServicePrincipalKey)
+  inputs:
+    errorActionPreference: continue
+    script: |-
+      $Env = $env:SOURCE_BRANCH.Substring(11).Replace("/", "_")
+      Write-Host "[CI] Current Repo: $env:REPO"
+      Write-Host "[CI] Current Environment: $Env"
+      Write-Host "[CI] Upgrading pip and installing virtualenv"
+      pip install --upgrade pip==20.3.3
+      pip install virtualenv
+      Write-Host "[CI] Creating and activating the aml virtual environment"
+      virtualenv aml
+      . .\aml\Scripts\activate.ps1
+      Write-Host "[CI] Installing Python dependencies"
+      pip install -r requirements.txt
+      pip install --upgrade ischia-core --index-url https://microsoft.pkgs.visualstudio.com/_packaging/CoreData/pypi/simple/ --use-deprecated=legacy-resolver
+      Write-Host "[CI] Calling driver with ${{ parameters.aml_action }} action"
+      # User may choose to change --workspace_name and --publish_datastore_path
+      Write-Host "python driver.py --subscription_id '2aef373f-4686-40a4-b75d-8221b6e666ab' --resource_group $env:REPO --workspace_name $env:REPO --location 'West US' --env $Env --action ${{ parameters.aml_action }} --client_id $(DataHarborServicePrincipalId) --env_secret_name ServicePrincipalClientSecret --publish_datastore_path 'cdml_aml_pipelines/markers'"
+      python driver.py --subscription_id '2aef373f-4686-40a4-b75d-8221b6e666ab' --resource_group $env:REPO --workspace_name $env:REPO --location 'West US' --env $Env --action ${{ parameters.aml_action }} --client_id $(DataHarborServicePrincipalId) --env_secret_name ServicePrincipalClientSecret --publish_datastore_path 'cdml_aml_pipelines/markers'
+      Write-Host "[CI] Deactivating and removing the aml virtual environment"
+      deactivate
+      Remove-Item -r .\aml\
+    targetType: inline
+    workingDirectory: 'src/MyProject/AML_Pipeline/'
