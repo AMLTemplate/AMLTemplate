@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+
+  <!-- Insert any custom settings here. -->
+
+  <Import Project="$(RootDirectory)\engineering.canaveral.build\root.props" />
+
+  <!-- Reference all projects (as ProjectFiles) here. -->
+
+  <ItemGroup>
+
+    <ProjectFiles Include="src/MyProject/Xflow/Workflows.xflowproj" />
+    <ProjectFiles Include="src/MyProject/Xflow/DataProcess_Xflow.scopeproj" />
+
+  </ItemGroup>
+
+  <Import Project="$(RootDirectory)\engineering.canaveral.build\root.traversal.targets" />
+
+  <!-- Insert any custom targets here. -->
+
+</Project>

@@ -1,0 +1,18 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+
+  <!-- Define global property values for the repo. -->
+
+  <PropertyGroup>
+
+    <!-- A reusable root path for Cosmos file deployment. Should be of the form https://cosmos15.osdinfra.net/cosmos/asimov.ingress -->
+    <CosmosRootPath Condition="'$(CosmosRootPath)' == ''">https://cosmos15.osdinfra.net/cosmos/asimov.partner.datafun</CosmosRootPath>
+
+    <!-- The fully-qualified domain name associated of the Azure Data Lake Store account for file deployment. -->
+    <AdlsAccountDomainName Condition="'$(AdlsAccountDomainName)' == ''">asimov-prod-data-c15.azuredatalakestore.net</AdlsAccountDomainName>
+ 
+    <!-- If true, skips the actual deployment of files to Xflow and Cosmos.  Useful for debugging and testing. -->
+    <FakeDeployment Condition="'$(FakeDeployment)' == ''">false</FakeDeployment>
+
+  </PropertyGroup>
+
+</Project> 
